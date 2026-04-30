@@ -82,34 +82,28 @@ class UserProfile(Base):
     user = Relationship("User", back_populates="profile")
 
 
-class ActivationToken(Base):
-    __tablename__ = "activation_tokens"
+class Token(Base):
+    __abstract__ = True
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     token = Column(String, nullable=False, unique=True, index=True)
     expires_at = Column(DateTime, nullable=False)
+
+
+class ActivationToken(Token):
+    __tablename__ = "activation_tokens"
 
     user = Relationship("User", back_populates="activation_tokens")
 
 
-class PasswordResetToken(Base):
+class PasswordResetToken(Token):
     __tablename__ = "password_reset_tokens"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    token = Column(String, nullable=False, unique=True, index=True)
-    expires_at = Column(DateTime, nullable=False)
 
     user = Relationship("User", back_populates="password_reset_tokens")
 
 
-class RefreshToken(Base):
+class RefreshToken(Token):
     __tablename__ = "refresh_tokens"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    token = Column(String, nullable=False, unique=True, index=True)
-    expires_at = Column(DateTime, nullable=False)
 
     user = Relationship("User", back_populates="refresh_tokens")
