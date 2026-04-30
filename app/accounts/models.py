@@ -1,6 +1,7 @@
 from enum import StrEnum, auto
+from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Enum, ForeignKey, Date, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Enum, ForeignKey, Date, Text, UniqueConstraint
 from sqlalchemy.orm import Relationship
 
 from db.engine import Base
@@ -31,7 +32,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
+    _hashed_password = Column("hashed_password", String, nullable=False)
     is_active = Column(Boolean, default=False, nullable=False)
     created_at = Column(
         DateTime(timezone=True),
@@ -51,19 +52,24 @@ class User(Base):
         back_populates="user",
         uselist=False,
     )
-    activation_tokens = Relationship(
+    activation_token = Relationship(
         "ActivationToken",
         back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False,
     )
 
-    password_reset_tokens = Relationship(
+    password_reset_token = Relationship(
         "PasswordResetToken",
         back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False,
     )
 
     refresh_tokens = Relationship(
         "RefreshToken",
         back_populates="user",
+        cascade="all, delete-orphan",
     )
 
 
@@ -88,19 +94,25 @@ class Token(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     token = Column(String, nullable=False, unique=True, index=True)
-    expires_at = Column(DateTime, nullable=False)
+    Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc) + timedelta(days=1),
+    )
 
 
 class ActivationToken(Token):
     __tablename__ = "activation_tokens"
 
-    user = Relationship("User", back_populates="activation_tokens")
+    user = Relationship("User", back_populates="activation_token")
+    __table_args__ = (UniqueConstraint("user_id"),)
 
 
 class PasswordResetToken(Token):
     __tablename__ = "password_reset_tokens"
 
-    user = Relationship("User", back_populates="password_reset_tokens")
+    user = Relationship("User", back_populates="password_reset_token")
+    __table_args__ = (UniqueConstraint("user_id"),)
 
 
 class RefreshToken(Token):
