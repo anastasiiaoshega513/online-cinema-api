@@ -55,6 +55,7 @@ class User(Base):
     profile = Relationship(
         "UserProfile",
         back_populates="user",
+        cascade="all, delete-orphan",
         uselist=False,
     )
     activation_token = Relationship(
@@ -63,14 +64,12 @@ class User(Base):
         cascade="all, delete-orphan",
         uselist=False,
     )
-
     password_reset_token = Relationship(
         "PasswordResetToken",
         back_populates="user",
         cascade="all, delete-orphan",
         uselist=False,
     )
-
     refresh_tokens = Relationship(
         "RefreshToken",
         back_populates="user",
