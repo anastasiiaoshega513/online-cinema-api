@@ -1,8 +1,8 @@
 """create accounts tables
 
-Revision ID: 221fe45affd9
+Revision ID: ca2fb2763d26
 Revises: 
-Create Date: 2026-04-30 13:20:42.813057
+Create Date: 2026-04-30 21:44:00.521127
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '221fe45affd9'
+revision: str = 'ca2fb2763d26'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -26,7 +26,9 @@ def upgrade() -> None:
     sa.Column('name', sa.Enum('USER', 'MODERATOR', 'ADMIN', name='usergroupenum'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_user_groups_id'), 'user_groups', ['id'], unique=False)
+    with op.batch_alter_table('user_groups', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_user_groups_id'), ['id'], unique=False)
+
     op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
@@ -38,38 +40,48 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['group_id'], ['user_groups.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
-    op.create_index(op.f('ix_users_id'), 'users', ['id'], unique=False)
+    with op.batch_alter_table('users', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_users_email'), ['email'], unique=True)
+        batch_op.create_index(batch_op.f('ix_users_id'), ['id'], unique=False)
+
     op.create_table('activation_tokens',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('token', sa.String(), nullable=False),
-    sa.Column('expires_at', sa.DateTime(), nullable=False),
+    sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id')
     )
-    op.create_index(op.f('ix_activation_tokens_id'), 'activation_tokens', ['id'], unique=False)
-    op.create_index(op.f('ix_activation_tokens_token'), 'activation_tokens', ['token'], unique=True)
+    with op.batch_alter_table('activation_tokens', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_activation_tokens_id'), ['id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_activation_tokens_token'), ['token'], unique=True)
+
     op.create_table('password_reset_tokens',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('token', sa.String(), nullable=False),
-    sa.Column('expires_at', sa.DateTime(), nullable=False),
+    sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id')
     )
-    op.create_index(op.f('ix_password_reset_tokens_id'), 'password_reset_tokens', ['id'], unique=False)
-    op.create_index(op.f('ix_password_reset_tokens_token'), 'password_reset_tokens', ['token'], unique=True)
+    with op.batch_alter_table('password_reset_tokens', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_password_reset_tokens_id'), ['id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_password_reset_tokens_token'), ['token'], unique=True)
+
     op.create_table('refresh_tokens',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('token', sa.String(), nullable=False),
-    sa.Column('expires_at', sa.DateTime(), nullable=False),
+    sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_refresh_tokens_id'), 'refresh_tokens', ['id'], unique=False)
-    op.create_index(op.f('ix_refresh_tokens_token'), 'refresh_tokens', ['token'], unique=True)
+    with op.batch_alter_table('refresh_tokens', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_refresh_tokens_id'), ['id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_refresh_tokens_token'), ['token'], unique=True)
+
     op.create_table('user_profiles',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -83,27 +95,41 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('user_id')
     )
-    op.create_index(op.f('ix_user_profiles_id'), 'user_profiles', ['id'], unique=False)
+    with op.batch_alter_table('user_profiles', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_user_profiles_id'), ['id'], unique=False)
+
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_index(op.f('ix_user_profiles_id'), table_name='user_profiles')
+    with op.batch_alter_table('user_profiles', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_user_profiles_id'))
+
     op.drop_table('user_profiles')
-    op.drop_index(op.f('ix_refresh_tokens_token'), table_name='refresh_tokens')
-    op.drop_index(op.f('ix_refresh_tokens_id'), table_name='refresh_tokens')
+    with op.batch_alter_table('refresh_tokens', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_refresh_tokens_token'))
+        batch_op.drop_index(batch_op.f('ix_refresh_tokens_id'))
+
     op.drop_table('refresh_tokens')
-    op.drop_index(op.f('ix_password_reset_tokens_token'), table_name='password_reset_tokens')
-    op.drop_index(op.f('ix_password_reset_tokens_id'), table_name='password_reset_tokens')
+    with op.batch_alter_table('password_reset_tokens', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_password_reset_tokens_token'))
+        batch_op.drop_index(batch_op.f('ix_password_reset_tokens_id'))
+
     op.drop_table('password_reset_tokens')
-    op.drop_index(op.f('ix_activation_tokens_token'), table_name='activation_tokens')
-    op.drop_index(op.f('ix_activation_tokens_id'), table_name='activation_tokens')
+    with op.batch_alter_table('activation_tokens', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_activation_tokens_token'))
+        batch_op.drop_index(batch_op.f('ix_activation_tokens_id'))
+
     op.drop_table('activation_tokens')
-    op.drop_index(op.f('ix_users_id'), table_name='users')
-    op.drop_index(op.f('ix_users_email'), table_name='users')
+    with op.batch_alter_table('users', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_users_id'))
+        batch_op.drop_index(batch_op.f('ix_users_email'))
+
     op.drop_table('users')
-    op.drop_index(op.f('ix_user_groups_id'), table_name='user_groups')
+    with op.batch_alter_table('user_groups', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_user_groups_id'))
+
     op.drop_table('user_groups')
     # ### end Alembic commands ###

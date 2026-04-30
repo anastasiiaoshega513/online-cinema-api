@@ -5,8 +5,8 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Enum, F
 from sqlalchemy.orm import Relationship, validates
 
 from db.engine import Base
-from security.passwords import hash_password, verify_password
-from validators.accounts import validate_password_strength, validate_email
+from app.security.passwords import hash_password, verify_password
+from app.validators.accounts import validate_password_strength, validate_email
 
 
 class UserGroupEnum(StrEnum):
