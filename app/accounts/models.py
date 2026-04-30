@@ -28,6 +28,9 @@ class UserGroup(Base):
 
     users = Relationship("User", back_populates="group")
 
+    def __repr__(self):
+        return f"<UserGroupModel(id={self.id}, name={self.name})>"
+
 
 class User(Base):
     __tablename__ = "users"
@@ -74,6 +77,9 @@ class User(Base):
         cascade="all, delete-orphan",
     )
 
+    def __repr__(self):
+        return f"<UserModel(id={self.id}, email={self.email}, is_active={self.is_active})>"
+
     @property
     def password(self) -> None:
         raise AttributeError("Password is write-only.")
@@ -105,6 +111,12 @@ class UserProfile(Base):
 
     user = Relationship("User", back_populates="profile")
 
+    def __repr__(self):
+        return (
+            f"<UserProfileModel(id={self.id}, first_name={self.first_name}, last_name={self.last_name}, "
+            f"gender={self.gender}, date_of_birth={self.date_of_birth})>"
+        )
+
 
 class Token(Base):
     __abstract__ = True
@@ -112,7 +124,7 @@ class Token(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     token = Column(String, nullable=False, unique=True, index=True)
-    Column(
+    expires_at = Column(
         DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(timezone.utc) + timedelta(days=1),
@@ -125,6 +137,9 @@ class ActivationToken(Token):
     user = Relationship("User", back_populates="activation_token")
     __table_args__ = (UniqueConstraint("user_id"),)
 
+    def __repr__(self):
+        return f"<ActivationTokenModel(id={self.id}, token={self.token}, expires_at={self.expires_at})>"
+
 
 class PasswordResetToken(Token):
     __tablename__ = "password_reset_tokens"
@@ -132,8 +147,14 @@ class PasswordResetToken(Token):
     user = Relationship("User", back_populates="password_reset_token")
     __table_args__ = (UniqueConstraint("user_id"),)
 
+    def __repr__(self):
+        return f"<PasswordResetTokenModel(id={self.id}, token={self.token}, expires_at={self.expires_at})>"
+
 
 class RefreshToken(Token):
     __tablename__ = "refresh_tokens"
 
     user = Relationship("User", back_populates="refresh_tokens")
+
+    def __repr__(self):
+        return f"<RefreshTokenModel(id={self.id}, token={self.token}, expires_at={self.expires_at})>"
