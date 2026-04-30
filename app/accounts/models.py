@@ -2,9 +2,11 @@ from enum import StrEnum, auto
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Enum, ForeignKey, Date, Text, UniqueConstraint
-from sqlalchemy.orm import Relationship
+from sqlalchemy.orm import Relationship, validates
 
 from db.engine import Base
+from security.passwords import hash_password, verify_password
+from validators.accounts import validate_password_strength, validate_email
 
 
 class UserGroupEnum(StrEnum):
@@ -71,6 +73,22 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+
+    @property
+    def password(self) -> None:
+        raise AttributeError("Password is write-only.")
+
+    @password.setter
+    def password(self, raw_password: str) -> None:
+        validate_password_strength(raw_password)
+        self._hashed_password = hash_password(raw_password)
+
+    def verify_password(self, raw_password: str) -> bool:
+        return verify_password(raw_password, self._hashed_password)
+
+    @validates("email")
+    def validate_email(self, key, value):
+        return validate_email(value.lower())
 
 
 class UserProfile(Base):
