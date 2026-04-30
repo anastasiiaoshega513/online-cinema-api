@@ -18,7 +18,7 @@ class GenderEnum(StrEnum):
 
 
 class UserGroup(Base):
-    __tablename__ = "user_group"
+    __tablename__ = "user_groups"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(Enum(UserGroupEnum), nullable=False)
@@ -75,9 +75,41 @@ class UserProfile(Base):
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
     avatar = Column(String, nullable=True)
-    gender = Column(String, nullable=True)
+    gender = Column(Enum(GenderEnum), nullable=True)
     date_of_birth = Column(Date, nullable=True)
     info = Column(Text, nullable=True)
 
     user = Relationship("User", back_populates="profile")
 
+
+class ActivationToken(Base):
+    __tablename__ = "activation_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token = Column(String, nullable=False, unique=True, index=True)
+    expires_at = Column(DateTime, nullable=False)
+
+    user = Relationship("User", back_populates="activation_tokens")
+
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token = Column(String, nullable=False, unique=True, index=True)
+    expires_at = Column(DateTime, nullable=False)
+
+    user = Relationship("User", back_populates="password_reset_tokens")
+
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token = Column(String, nullable=False, unique=True, index=True)
+    expires_at = Column(DateTime, nullable=False)
+
+    user = Relationship("User", back_populates="refresh_tokens")
