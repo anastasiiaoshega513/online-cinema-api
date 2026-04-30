@@ -1,6 +1,6 @@
 from enum import StrEnum, auto
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Enum, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Enum, ForeignKey, Date, Text
 from sqlalchemy.orm import Relationship
 
 from db.engine import Base
@@ -23,9 +23,11 @@ class UserGroup(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(Enum(UserGroupEnum), nullable=False)
 
+    users = Relationship("User", back_populates="group")
+
 
 class User(Base):
-    __tablename__ = "user"
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
@@ -42,7 +44,40 @@ class User(Base):
         onupdate=func.now(),
         nullable=False,
     )
-    group_id = Column(Integer, ForeignKey("user_group.id"), nullable=False)
+    group_id = Column(Integer, ForeignKey("user_groups.id"), nullable=False)
     group = Relationship(UserGroup, back_populates="users")
+    profile = Relationship(
+        "UserProfile",
+        back_populates="user",
+        uselist=False,
+    )
+    activation_tokens = Relationship(
+        "ActivationToken",
+        back_populates="user",
+    )
 
+    password_reset_tokens = Relationship(
+        "PasswordResetToken",
+        back_populates="user",
+    )
+
+    refresh_tokens = Relationship(
+        "RefreshToken",
+        back_populates="user",
+    )
+
+
+class UserProfile(Base):
+    __tablename__ = "user_profiles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
+    first_name = Column(String, nullable=True)
+    last_name = Column(String, nullable=True)
+    avatar = Column(String, nullable=True)
+    gender = Column(String, nullable=True)
+    date_of_birth = Column(Date, nullable=True)
+    info = Column(Text, nullable=True)
+
+    user = Relationship("User", back_populates="profile")
 
