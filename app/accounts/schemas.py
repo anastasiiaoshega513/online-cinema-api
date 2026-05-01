@@ -21,7 +21,7 @@ class UserLoginRequestSchema(UserBase):
     password: str
 
 
-class UserActivationRequestSchema(BaseModel):
+class UserActivationRequestSchema(UserBase):
     token: str
 
 
