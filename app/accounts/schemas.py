@@ -1,5 +1,8 @@
+from datetime import date
+
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
+from accounts.models import GenderEnum
 from app.validators.accounts import validate_password_strength
 
 
@@ -69,3 +72,24 @@ class UserLoginResponseSchema(TokenRefreshResponseSchema):
 
 class MessageResponseSchema(BaseModel):
     message: str
+
+
+class ProfileBase(BaseModel):
+
+    first_name: str | None = None
+    last_name: str | None = None
+    gender: GenderEnum | None = None
+    date_of_birth: date | None = None
+    info: str | None = None
+    avatar: str | None = None
+
+
+class ProfileRequestSchema(ProfileBase):
+    pass
+
+
+class ProfileResponseSchema(ProfileBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int

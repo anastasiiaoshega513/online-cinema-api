@@ -1,13 +1,13 @@
 from datetime import datetime, timezone, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from accounts.schemas import PasswordResetResponseSchema
-from app.accounts.models import ActivationToken, User, PasswordResetToken, RefreshToken
+from accounts.schemas import PasswordResetResponseSchema, ProfileResponseSchema, ProfileRequestSchema
+from app.accounts.models import ActivationToken, User, PasswordResetToken, RefreshToken, UserProfile
 from app.accounts.schemas import UserRegistrationResponseSchema, UserRegistrationRequestSchema, MessageResponseSchema, \
     UserActivationRequestSchema, PasswordResetRequestSchema, PasswordResetCompleteRequestSchema, \
     UserLoginResponseSchema, UserLoginRequestSchema, TokenRefreshResponseSchema, TokenRefreshRequestSchema
@@ -15,7 +15,7 @@ from app.accounts.services import get_user_by_email, create_user
 from db.dependencies import get_db
 from app.security.passwords import hash_password
 from app.security.tokens import create_access_token, REFRESH_TOKEN_EXPIRE_DAYS, \
-    create_refresh_token, decode_refresh_token
+    create_refresh_token, decode_refresh_token, decode_access_token
 
 router = APIRouter()
 
@@ -146,7 +146,7 @@ async def reset_password(
         raise_invalid_email_or_token()
 
     try:
-        db_user.password = hash_password(user.new_password)
+        db_user.password = user.new_password
         await db.delete(db_user.password_reset_token)
         await db.commit()
         return {"message": "Password reset successfully."}
@@ -246,3 +246,71 @@ async def refresh_token(
         "access_token": new_access_token,
         "token_type": "bearer",
     }
+
+
+class TokenExpiredError:
+    pass
+
+
+@router.post("/profile/", response_model=ProfileResponseSchema)
+async def create_profile(profile: ProfileRequestSchema, authorization: str | None = Header(default=None), db: AsyncSession = Depends(get_db)):
+    if authorization is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header is missing",
+        )
+
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Authorization header format. Expected 'Bearer <token>'",
+        )
+
+    token = authorization.removeprefix("Bearer ").strip()
+    try:
+        user_id = decode_access_token(token)
+    except TokenExpiredError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired.",
+        )
+
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.profile), selectinload(User.group))
+        .where(User.id == user_id)
+    )
+    current_user = result.scalar_one_or_none()
+
+    if not current_user or not current_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or not active.",
+        )
+
+    if current_user.profile is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User already has a profile.",
+        )
+
+    profile_data = profile.model_dump(exclude_unset=True)
+
+    new_profile = UserProfile(
+        user_id=current_user.id,
+        **profile_data,
+    )
+
+    db.add(new_profile)
+
+    try:
+        await db.commit()
+        await db.refresh(new_profile)
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while creating the profile.",
+        )
+
+    return new_profile
