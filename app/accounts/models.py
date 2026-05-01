@@ -7,6 +7,7 @@ from sqlalchemy.orm import Relationship, validates
 from db.engine import Base
 from app.security.passwords import hash_password, verify_password
 from app.validators.accounts import validate_password_strength, validate_email
+from security.utils import generate_secure_token
 
 
 class UserGroupEnum(StrEnum):
@@ -122,7 +123,13 @@ class Token(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    token = Column(String, nullable=False, unique=True, index=True)
+    token = Column(
+        String(64),
+        unique=True,
+        index=True,
+        nullable=False,
+        default=generate_secure_token,
+    )
     expires_at = Column(
         DateTime(timezone=True),
         nullable=False,
