@@ -199,4 +199,42 @@ async def login(
     }
 
 
+@router.post("/refresh/", response_model=TokenRefreshResponseSchema)
+async def refresh_token(
+    token: TokenRefreshRequestSchema,
+    db: AsyncSession = Depends(get_db),
+):
 
+    decoded_refresh_token = decode_refresh_token(token.refresh_token)
+
+    result = await db.execute(
+        select(RefreshToken)
+        .options(selectinload(RefreshToken.user))
+        .where(RefreshToken.token == token.refresh_token)
+    )
+    db_refresh_token = result.scalar_one_or_none()
+
+    if not db_refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token not found.",
+        )
+
+    if decoded_refresh_token["user_id"] != db_refresh_token.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token.",
+        )
+
+    db_user = db_refresh_token.user
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    new_access_token = create_access_token(user_id=db_user.id)
+    return {
+        "access_token": new_access_token,
+        "token_type": "bearer",
+    }
