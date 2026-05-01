@@ -1,9 +1,9 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from accounts.models import UserGroup, UserGroupEnum, User
-from accounts.schemas import UserRegistrationRequestSchema
-from security.passwords import hash_password
+from app.accounts.models import UserGroup, UserGroupEnum, User
+from app.accounts.schemas import UserRegistrationRequestSchema
+from app.security.passwords import hash_password
 
 
 async def create_user(db: AsyncSession, user: UserRegistrationRequestSchema):

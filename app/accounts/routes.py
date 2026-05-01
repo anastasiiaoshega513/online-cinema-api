@@ -6,20 +6,21 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from accounts.models import ActivationToken, User, PasswordResetToken, RefreshToken
-from accounts.schemas import UserRegistrationResponseSchema, UserRegistrationRequestSchema, MessageResponseSchema, \
+from accounts.schemas import PasswordResetResponseSchema
+from app.accounts.models import ActivationToken, User, PasswordResetToken, RefreshToken
+from app.accounts.schemas import UserRegistrationResponseSchema, UserRegistrationRequestSchema, MessageResponseSchema, \
     UserActivationRequestSchema, PasswordResetRequestSchema, PasswordResetCompleteRequestSchema, \
     UserLoginResponseSchema, UserLoginRequestSchema, TokenRefreshResponseSchema, TokenRefreshRequestSchema
-from accounts.services import get_user_by_email, create_user
+from app.accounts.services import get_user_by_email, create_user
 from db.dependencies import get_db
-from security.passwords import hash_password
-from security.tokens import create_access_token, REFRESH_TOKEN_EXPIRE_DAYS, \
+from app.security.passwords import hash_password
+from app.security.tokens import create_access_token, REFRESH_TOKEN_EXPIRE_DAYS, \
     create_refresh_token, decode_refresh_token
 
 router = APIRouter()
 
 
-@router.post("register", response_model=UserRegistrationResponseSchema, status_code=status.HTTP_201_CREATED)
+@router.post("/register/", response_model=UserRegistrationResponseSchema, status_code=status.HTTP_201_CREATED)
 async def register_user(user: UserRegistrationRequestSchema, db: AsyncSession = Depends(get_db)):
     db_user = await get_user_by_email(db, str(user.email))
     if db_user:
