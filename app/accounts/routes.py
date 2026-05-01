@@ -1,18 +1,20 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
-from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from accounts.models import ActivationToken, User, PasswordResetToken
+from accounts.models import ActivationToken, User, PasswordResetToken, RefreshToken
 from accounts.schemas import UserRegistrationResponseSchema, UserRegistrationRequestSchema, MessageResponseSchema, \
-    UserActivationRequestSchema, PasswordResetRequestSchema, PasswordResetCompleteRequestSchema
+    UserActivationRequestSchema, PasswordResetRequestSchema, PasswordResetCompleteRequestSchema, \
+    UserLoginResponseSchema, UserLoginRequestSchema, TokenRefreshResponseSchema, TokenRefreshRequestSchema
 from accounts.services import get_user_by_email, create_user
 from db.dependencies import get_db
 from security.passwords import hash_password
+from security.tokens import create_access_token, REFRESH_TOKEN_EXPIRE_DAYS, \
+    create_refresh_token, decode_refresh_token
 
 router = APIRouter()
 
@@ -146,3 +148,55 @@ async def reset_password(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while resetting the password.",
         )
+
+
+@router.post(
+    "/login/",
+    response_model=UserLoginResponseSchema,
+)
+async def login(
+    user: UserLoginRequestSchema,
+    db: AsyncSession = Depends(get_db),
+):
+    db_user = await get_user_by_email(db, str(user.email))
+
+    if not db_user or not db_user.verify_password(user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password.",
+        )
+
+    if not db_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is not activated.",
+        )
+
+    user_access_token = create_access_token(user_id=db_user.id)
+
+    user_refresh_token = create_refresh_token(user_id=db_user.id)
+
+    try:
+        refresh_token_record = RefreshToken(
+            user_id=db_user.id,
+            token=user_refresh_token,
+            expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+        )
+        db.add(refresh_token_record)
+        await db.commit()
+
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while processing the request.",
+        )
+
+    return {
+        "access_token": user_access_token,
+        "refresh_token": user_refresh_token,
+        "token_type": "bearer",
+    }
+
+
+
