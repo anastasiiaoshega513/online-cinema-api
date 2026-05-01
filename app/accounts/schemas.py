@@ -25,10 +25,6 @@ class UserActivationRequestSchema(UserBase):
     token: str
 
 
-class ResendActivationRequestSchema(UserBase):
-    pass
-
-
 class UserRegistrationResponseSchema(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
@@ -40,7 +36,7 @@ class PasswordResetRequestSchema(UserBase):
     pass
 
 
-class PasswordResetCompleteRequestSchema(BaseModel):
+class PasswordResetCompleteRequestSchema(UserBase):
     token: str
     new_password: str = Field(min_length=8)
 
