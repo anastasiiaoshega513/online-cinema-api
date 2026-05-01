@@ -83,7 +83,7 @@ async def activate(
     return {"message": "User account activated successfully."}
 
 
-@router.post("/password-reset/request/", response_model=MessageResponseSchema)
+@router.post("/password-reset/request/", response_model=PasswordResetResponseSchema)
 async def password_reset(
     user: PasswordResetRequestSchema, db: AsyncSession = Depends(get_db)
 ):
@@ -94,17 +94,24 @@ async def password_reset(
     )
     db_user = result.scalar_one_or_none()
 
-    if db_user and db_user.is_active:
-        if db_user.password_reset_token is not None:
-            await db.delete(db_user.password_reset_token)
-            await db.flush()
+    if not db_user or not db_user.is_active:
+        return {
+            "message": "Password reset token generated.",
+            "reset_token": None,
+        }
 
-        new_token = PasswordResetToken(user_id=db_user.id)
-        db.add(new_token)
-        await db.commit()
+    if db_user.password_reset_token is not None:
+        await db.delete(db_user.password_reset_token)
+        await db.flush()
+
+    new_token = PasswordResetToken(user_id=db_user.id)
+    db.add(new_token)
+    await db.commit()
+    await db.refresh(new_token)
 
     return {
-        "message": "If you are registered, you will receive an email with instructions."
+        "message": "Password reset token generated.",
+        "reset_token": new_token.token,
     }
 
 

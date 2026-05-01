@@ -36,6 +36,11 @@ class PasswordResetRequestSchema(UserBase):
     pass
 
 
+class PasswordResetResponseSchema(BaseModel):
+    message: str
+    reset_token: str | None = None
+
+
 class PasswordResetCompleteRequestSchema(UserBase):
     token: str
     new_password: str = Field(min_length=8)
