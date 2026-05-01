@@ -11,7 +11,8 @@ import sys
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from db.engine import Base
-from app.accounts import models
+from app.accounts import models as accounts_models
+from app.movies import models as movies_models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
