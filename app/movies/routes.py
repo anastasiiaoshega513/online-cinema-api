@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Query, Depends, HTTPException
 from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.dependencies import get_db
 from app.movies.models import Movie
 from app.movies.schemas import MovieListResponseSchema, MovieListItemSchema
-from movies.schemas import MovieDetailSchema, MovieCreateSchema
+from movies.schemas import MovieDetailSchema, MovieCreateSchema, MovieUpdateSchema
 
 router = APIRouter()
 
@@ -83,4 +84,30 @@ async def create_movie(movie_data: MovieCreateSchema, db: AsyncSession = Depends
     movie = Movie(**movie_data.model_dump())
     db.add(movie)
     await db.commit()
+    return MovieDetailSchema.model_validate(movie)
+
+
+@router.patch("/movies/{movie_id}/", response_model=MovieDetailSchema)
+async def update_movie(movie_id: int, movie_data: MovieUpdateSchema, db: AsyncSession = Depends(get_db)) -> MovieDetailSchema:
+    stmt = await db.execute(select(Movie).where(Movie.id == movie_id))
+    movie = stmt.scalars().first()
+
+    if not movie:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"A movie with given ID '{movie_id}' was not found."
+            )
+        )
+
+    for field, value in movie_data.model_dump(exclude_unset=True).items():
+        setattr(movie, field, value)
+
+    try:
+        await db.commit()
+        await db.refresh(movie)
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail="Invalid input data.")
+
     return MovieDetailSchema.model_validate(movie)

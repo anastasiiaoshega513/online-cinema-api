@@ -40,3 +40,17 @@ class MovieDetailSchema(MovieBaseSchema):
 class MovieCreateSchema(MovieDetailSchema):
     model_config = ConfigDict(from_attributes=True)
     pass
+
+
+class MovieUpdateSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int | None = None
+    name: str | None = None
+    time: str | None = None
+    price: float | None = None
+    year: str | None = None
+    description: str | None = None
+    rating: float | None = None
+    genres: List[str] | None = None
+
