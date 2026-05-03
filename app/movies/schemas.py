@@ -35,4 +35,3 @@ class MovieDetailSchema(MovieBaseSchema):
     description: str
     rating: float
     genres: List[str]
-

@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.dependencies import get_db
 from app.movies.models import Movie
 from app.movies.schemas import MovieListResponseSchema, MovieListItemSchema
+from movies.schemas import MovieDetailSchema
 
 router = APIRouter()
 
@@ -41,3 +42,20 @@ async def get_movie_list(
         total_items=total_items,
     )
     return response
+
+
+@router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
+async def get_movie_list(movie_id: int, db: AsyncSession = Depends(get_db)) -> MovieDetailSchema:
+
+    stmt = select(Movie).where(Movie.id == movie_id)
+
+    result = await db.execute(stmt)
+    movie = result.scalars().first()
+
+    if not movie:
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
+
+    return MovieDetailSchema.model_validate(movie)
