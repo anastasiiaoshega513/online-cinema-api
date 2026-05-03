@@ -35,3 +35,8 @@ class MovieDetailSchema(MovieBaseSchema):
     description: str
     rating: float
     genres: List[str]
+
+
+class MovieCreateSchema(MovieDetailSchema):
+    model_config = ConfigDict(from_attributes=True)
+    pass

@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.dependencies import get_db
 from app.movies.models import Movie
 from app.movies.schemas import MovieListResponseSchema, MovieListItemSchema
-from movies.schemas import MovieDetailSchema
+from movies.schemas import MovieDetailSchema, MovieCreateSchema
 
 router = APIRouter()
 
@@ -58,4 +58,29 @@ async def get_movie_list(movie_id: int, db: AsyncSession = Depends(get_db)) -> M
             detail="Movie with the given ID was not found."
         )
 
+    return MovieDetailSchema.model_validate(movie)
+
+
+@router.post("/movies/", response_model=MovieDetailSchema)
+async def create_movie(movie_data: MovieCreateSchema, db: AsyncSession = Depends(get_db)) -> MovieDetailSchema:
+    existing_result = await db.execute(
+        select(Movie).where(
+            (Movie.name == movie_data.name),
+            (Movie.year == movie_data.year),
+            (Movie.time == movie_data.time)
+        )
+    )
+    existing_movie = existing_result.scalars().first()
+
+    if existing_movie:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"A movie with the name '{movie_data.name}',"
+                f" year {movie_data.year}, time '{movie_data.time}' already exists."
+            )
+        )
+    movie = Movie(**movie_data.model_dump())
+    db.add(movie)
+    await db.commit()
     return MovieDetailSchema.model_validate(movie)
