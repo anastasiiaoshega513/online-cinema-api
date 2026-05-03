@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from accounts.schemas import PasswordResetResponseSchema
+from app.accounts.schemas import PasswordResetResponseSchema
 from app.accounts.models import ActivationToken, User, PasswordResetToken, RefreshToken
 from app.accounts.schemas import UserRegistrationResponseSchema, UserRegistrationRequestSchema, MessageResponseSchema, \
     UserActivationRequestSchema, PasswordResetRequestSchema, PasswordResetCompleteRequestSchema, \
