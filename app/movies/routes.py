@@ -95,9 +95,7 @@ async def update_movie(movie_id: int, movie_data: MovieUpdateSchema, db: AsyncSe
     if not movie:
         raise HTTPException(
             status_code=404,
-            detail=(
-                f"A movie with given ID '{movie_id}' was not found."
-            )
+            detail="Movie with the given ID was not found."
         )
 
     for field, value in movie_data.model_dump(exclude_unset=True).items():
@@ -111,3 +109,19 @@ async def update_movie(movie_id: int, movie_data: MovieUpdateSchema, db: AsyncSe
         raise HTTPException(status_code=400, detail="Invalid input data.")
 
     return MovieDetailSchema.model_validate(movie)
+
+
+@router.delete("/movies/{movie_id}/")
+async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
+    stmt = await db.execute(select(Movie).where(Movie.id == movie_id))
+    movie = stmt.scalars().first()
+
+    if not movie:
+        raise HTTPException(
+            status_code=404,
+            detail="Movie with the given ID was not found."
+        )
+
+    await db.delete(movie)
+    await db.commit()
+    return {"detail": "Movie deleted successfully."}
