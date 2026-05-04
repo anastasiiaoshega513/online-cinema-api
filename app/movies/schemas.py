@@ -3,15 +3,22 @@ from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
 
+class GenreSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+
+
 class MovieBaseSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     name: str
-    time: str
+    time: int
     price: float
 
 
-class MovieListItemSchema(BaseModel):
+class MovieListItemSchema(MovieBaseSchema):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -31,15 +38,19 @@ class MovieDetailSchema(MovieBaseSchema):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    year: str
+    year: int
+    description: str
+    rating: float
+    genres: List[GenreSchema]
+
+
+class MovieCreateSchema(MovieBaseSchema):
+    model_config = ConfigDict(from_attributes=True)
+
+    year: int
     description: str
     rating: float
     genres: List[str]
-
-
-class MovieCreateSchema(MovieDetailSchema):
-    model_config = ConfigDict(from_attributes=True)
-    pass
 
 
 class MovieUpdateSchema(BaseModel):
@@ -47,10 +58,8 @@ class MovieUpdateSchema(BaseModel):
 
     id: int | None = None
     name: str | None = None
-    time: str | None = None
+    time: int | None = None
     price: float | None = None
-    year: str | None = None
+    year: int | None = None
     description: str | None = None
     rating: float | None = None
-    genres: List[str] | None = None
-
