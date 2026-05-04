@@ -54,6 +54,10 @@ class Movie(Base):
         secondary=MoviesGenresModel,
         back_populates="movies",
     )
+    cart_items = Relationship(
+        "CartItem",
+        back_populates="movie",
+    )
 
     def __repr__(self):
         return f"<Movie(name='{self.name}', release_year='{self.year}', rating={self.rating})>"

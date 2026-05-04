@@ -77,6 +77,7 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    cart = Relationship("Cart", back_populates="user", cascade="all, delete-orphan", uselist=False)
 
     def __repr__(self):
         return f"<UserModel(id={self.id}, email={self.email}, is_active={self.is_active})>"
