@@ -14,6 +14,7 @@ class MovieBaseSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     name: str
+    year: int
     time: int
     price: float
 
@@ -38,7 +39,6 @@ class MovieDetailSchema(MovieBaseSchema):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    year: int
     description: str
     rating: float
     genres: List[GenreSchema]

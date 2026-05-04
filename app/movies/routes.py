@@ -1,5 +1,7 @@
+from typing import Literal
+
 from fastapi import APIRouter, Query, Depends, HTTPException
-from sqlalchemy import select, func
+from sqlalchemy import select, func, asc, desc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -16,15 +18,52 @@ router = APIRouter()
 async def get_movie_list(
         page: int = Query(1, ge=1),
         per_page: int = Query(10, ge=1, le=20),
+
+        search: str | None = Query(None, alias="search"),
+        year: int | None = Query(None, ge=1888),
+        min_price: float | None = Query(None, ge=0),
+        max_price: float | None = Query(None, ge=0),
+
+        order_by: Literal["id", "year", "rating", "price"] = "id",
+        sort_order: Literal["asc", "desc"] = "asc",
+
         db: AsyncSession = Depends(get_db),
 ) -> MovieListResponseSchema:
 
     offset = (page - 1) * per_page
+
+    sort_columns = {
+        "id": Movie.id,
+        "year": Movie.year,
+        "rating": Movie.rating,
+        "price": Movie.price,
+    }
+
+    sort_column = sort_columns[order_by]
+
+    if sort_order == "asc":
+        order_by = asc(sort_column)
+    else:
+        order_by = desc(sort_column)
+
+    filters = []
+
+    if year is not None:
+        filters.append(Movie.year == year)
+    if min_price is not None:
+        filters.append(Movie.price >= min_price)
+    if max_price is not None:
+        filters.append(Movie.price <= max_price)
+
+    if search:
+        search_pattern = f"%{search.strip()}%"
+        filters.append(Movie.name.ilike(search_pattern))
+
     count_stmt = select(func.count(Movie.id))
     result_count = await db.execute(count_stmt)
     total_items = result_count.scalar() or 0
 
-    stmt = select(Movie).order_by(Movie.id).offset(offset).limit(per_page)
+    stmt = select(Movie).order_by(order_by).where(*filters).offset(offset).limit(per_page)
 
     result_movies = await db.execute(stmt)
     movies = result_movies.scalars().all()
