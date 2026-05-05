@@ -6,6 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from accounts.dependencies import get_current_user
 from app.accounts.schemas import PasswordResetResponseSchema, ProfileResponseSchema, ProfileRequestSchema
 from app.accounts.models import ActivationToken, User, PasswordResetToken, RefreshToken, UserProfile
 from app.accounts.schemas import UserRegistrationResponseSchema, UserRegistrationRequestSchema, MessageResponseSchema, \
@@ -13,9 +14,8 @@ from app.accounts.schemas import UserRegistrationResponseSchema, UserRegistratio
     UserLoginResponseSchema, UserLoginRequestSchema, TokenRefreshResponseSchema, TokenRefreshRequestSchema
 from app.accounts.services import get_user_by_email, create_user
 from db.dependencies import get_db
-from app.security.passwords import hash_password
 from app.security.tokens import create_access_token, REFRESH_TOKEN_EXPIRE_DAYS, \
-    create_refresh_token, decode_refresh_token, decode_access_token
+    create_refresh_token, decode_refresh_token
 
 router = APIRouter()
 
@@ -248,45 +248,8 @@ async def refresh_token(
     }
 
 
-class TokenExpiredError:
-    pass
-
-
 @router.post("/profile/", response_model=ProfileResponseSchema)
-async def create_profile(profile: ProfileRequestSchema, authorization: str | None = Header(default=None), db: AsyncSession = Depends(get_db)):
-    if authorization is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authorization header is missing",
-        )
-
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Authorization header format. Expected 'Bearer <token>'",
-        )
-
-    token = authorization.removeprefix("Bearer ").strip()
-    try:
-        user_id = decode_access_token(token)
-    except TokenExpiredError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired.",
-        )
-
-    result = await db.execute(
-        select(User)
-        .options(selectinload(User.profile), selectinload(User.group))
-        .where(User.id == user_id)
-    )
-    current_user = result.scalar_one_or_none()
-
-    if not current_user or not current_user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found or not active.",
-        )
+async def create_profile(profile: ProfileRequestSchema, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
 
     if current_user.profile is not None:
         raise HTTPException(
