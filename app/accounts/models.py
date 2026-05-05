@@ -77,6 +77,11 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    orders = Relationship(
+        "Order",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
     cart = Relationship("Cart", back_populates="user", cascade="all, delete-orphan", uselist=False)
 
     def __repr__(self):

@@ -14,6 +14,7 @@ from db.engine import Base
 from app.accounts import models as accounts_models
 from app.movies import models as movies_models
 from app.carts import models as cart_models
+from app.orders import models as order_models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

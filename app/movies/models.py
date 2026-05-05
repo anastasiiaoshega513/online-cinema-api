@@ -58,6 +58,10 @@ class Movie(Base):
         "CartItem",
         back_populates="movie",
     )
+    order_items = Relationship(
+        "OrderItem",
+        back_populates="movie",
+    )
 
     def __repr__(self):
         return f"<Movie(name='{self.name}', release_year='{self.year}', rating={self.rating})>"
