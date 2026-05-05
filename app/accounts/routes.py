@@ -64,7 +64,7 @@ async def activate(
     if (
         not activation_token
         or activation_token.token != user.token
-        or activation_token.expires_at < datetime.now(timezone.utc)
+        or activation_token.expires_at < datetime.now(timezone.utc).replace(tzinfo=None)
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -138,7 +138,7 @@ async def reset_password(
     reset_token = db_user.password_reset_token
 
     if (
-        reset_token.expires_at < datetime.now(timezone.utc)
+        reset_token.expires_at < datetime.now(timezone.utc).replace(tzinfo=None)
         or reset_token.token != user.token
     ):
         await db.delete(reset_token)
