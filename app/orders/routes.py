@@ -13,13 +13,9 @@ from carts.models import CartItem
 from carts.services import get_cart_with_items
 from db.dependencies import get_db
 from movies.models import Movie
+from orders.services import get_order
 
 router = APIRouter()
-
-# POST /orders
-# GET /orders
-# GET /orders/{order_id}
-# PATCH /orders/{order_id}/cancel
 
 
 @router.get("/orders/", response_model=list[OrderResponseSchema])
@@ -98,19 +94,31 @@ async def create_order(current_user: User = Depends(get_current_user), db: Async
 
 @router.get("/orders/{order_id}/", response_model=OrderResponseSchema)
 async def get_one_order(order_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    stmt = (
-        select(Order)
-        .options(
-            selectinload(Order.items).selectinload(OrderItem.movie)
-        )
-        .where(Order.id == order_id, Order.user_id == current_user.id)
-    )
+    order = get_order(db=db, order_id=order_id, user_id=current_user.id)
+    return order
 
-    result = await db.execute(stmt)
-    order = result.scalar_one_or_none()
 
-    if not order:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No order found.")
+@router.patch("/orders/{order_id}/cancel/", response_model=OrderResponseSchema)
+async def cancel_order(order_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    order = await get_order(db=db, order_id=order_id, user_id=current_user.id)
+
+    if not order.status == OrderStatusEnum.PENDING:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This order cannot be canceled.")
+
+    order.status = OrderStatusEnum.CANCELED
+    await db.commit()
 
     return order
 
+
+@router.post("/orders/{order_id}/pay/", response_model=OrderResponseSchema)
+async def pay_order(order_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    order = await get_order(db=db, order_id=order_id, user_id=current_user.id)
+
+    if not order.status == OrderStatusEnum.PENDING:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This order cannot be paid.")
+
+    order.status = OrderStatusEnum.PAID
+    await db.commit()
+
+    return order
