@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from accounts.dependencies import get_current_user
+from app.accounts.dependencies import get_current_user
 from app.accounts.schemas import PasswordResetResponseSchema, ProfileResponseSchema, ProfileRequestSchema
 from app.accounts.models import ActivationToken, User, PasswordResetToken, RefreshToken, UserProfile
 from app.accounts.schemas import UserRegistrationResponseSchema, UserRegistrationRequestSchema, MessageResponseSchema, \
