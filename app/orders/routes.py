@@ -17,8 +17,7 @@ router = APIRouter()
 # PATCH /orders/{order_id}/cancel
 #
 
-
-@router.get("/orders/", response_model=OrderResponseSchema)
+@router.get("/orders/", response_model=list[OrderResponseSchema])
 async def get_all_orders(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     stmt = (
         select(Order)
@@ -33,7 +32,7 @@ async def get_all_orders(current_user: User = Depends(get_current_user), db: Asy
     orders = result_orders.scalars().all()
 
     if not orders:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No movies found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No orders found.")
 
     return orders
 
