@@ -20,15 +20,7 @@ router = APIRouter()
 # GET /orders
 # GET /orders/{order_id}
 # PATCH /orders/{order_id}/cancel
-#
-# - нельзя создать заказ из пустой корзины
-# - пользователь может видеть только свои заказы
-# - при создании заказа цена фильма сохраняется в price_at_order
-# - total_amount считается на момент создания заказа
-# - после создания заказа корзина очищается
-# - заказ создаётся со статусом pending
-# - pending order можно отменить
-# - paid order нельзя отменить
+
 
 @router.get("/orders/", response_model=list[OrderResponseSchema])
 async def get_all_orders(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -100,6 +92,25 @@ async def create_order(current_user: User = Depends(get_current_user), db: Async
     )
 
     order = result.scalar_one()
+
+    return order
+
+
+@router.get("/orders/{order_id}/", response_model=OrderResponseSchema)
+async def get_one_order(order_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    stmt = (
+        select(Order)
+        .options(
+            selectinload(Order.items).selectinload(OrderItem.movie)
+        )
+        .where(Order.id == order_id, Order.user_id == current_user.id)
+    )
+
+    result = await db.execute(stmt)
+    order = result.scalar_one_or_none()
+
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No order found.")
 
     return order
 
