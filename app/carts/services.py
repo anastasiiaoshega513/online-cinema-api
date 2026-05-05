@@ -9,13 +9,14 @@ from app.carts.models import Cart, CartItem
 from db.dependencies import get_db
 
 
-async def get_cart_with_items(db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)) -> Cart | None:
+async def get_cart_with_items(db: AsyncSession, user_id: int) -> Cart | None:
     result = await db.execute(
         select(Cart)
         .options(
             selectinload(Cart.items).selectinload(CartItem.movie)
         )
-        .where(Cart.user_id == current_user.id)
+        .where(Cart.user_id == user_id)
+        .execution_options(populate_existing=True)
     )
 
     return result.scalar_one_or_none()

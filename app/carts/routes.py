@@ -9,8 +9,6 @@ from app.movies.models import Movie
 
 router = APIRouter()
 
-# DELETE /cart/items/{movie_id}
-# DELETE /cart/clear
 
 @router.get("/cart/", response_model=CartResponseScheme, response_model_exclude_none=True)
 async def get_cart(cart: Cart = Depends(get_or_create_cart)):
@@ -48,7 +46,7 @@ async def add_to_cart(movie_id: int, cart: Cart = Depends(get_or_create_cart), d
     db.add(item)
     await db.commit()
 
-    cart = await get_cart_with_items()
+    cart = await get_cart_with_items(db=db, user_id=cart.user_id)
 
     return {
         "detail": "Movie has been added to the cart.",
@@ -70,7 +68,7 @@ async def remove_from_cart(movie_id: int, cart: Cart = Depends(get_or_create_car
     await db.delete(movie_item)
     await db.commit()
 
-    cart = await get_cart_with_items()
+    cart = await get_cart_with_items(db=db, user_id=cart.user_id)
 
     return {
         "detail": "Movie has been deleted from the cart successfully.",

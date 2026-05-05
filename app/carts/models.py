@@ -12,12 +12,12 @@ class Cart(Base):
 
     user = Relationship(
         "User",
-        back_populates="carts",
+        back_populates="cart",
         uselist=False
     )
     items = Relationship(
         "CartItem",
-        back_populates="carts",
+        back_populates="cart",
         cascade="all, delete-orphan",
     )
 

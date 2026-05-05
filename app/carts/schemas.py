@@ -3,7 +3,7 @@ from typing import List
 
 from pydantic import BaseModel, ConfigDict
 
-from movies.schemas import MovieBaseSchema
+from app.movies.schemas import MovieBaseSchema
 
 
 class CartItemScheme(BaseModel):
