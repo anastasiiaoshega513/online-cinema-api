@@ -228,7 +228,7 @@ async def refresh_token(
             detail="Refresh token not found.",
         )
 
-    if decoded_refresh_token["user_id"] != db_refresh_token.user_id:
+    if int(decoded_refresh_token["sub"]) != db_refresh_token.user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token.",
