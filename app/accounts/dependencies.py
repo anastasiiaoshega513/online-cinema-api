@@ -1,28 +1,29 @@
-from fastapi import HTTPException, status, Header, Depends
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import ExpiredSignatureError, InvalidTokenError
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.accounts.models import User
-from app.security.tokens import decode_access_token
 from db.dependencies import get_db
+from app.security.tokens import decode_access_token
 
 
-async def get_current_user(authorization: str | None = Header(default=None), db: AsyncSession = Depends(get_db)):
-    if authorization is None:
+bearer_scheme = HTTPBearer(auto_error=False)
+
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    db: AsyncSession = Depends(get_db),
+):
+    if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authorization header is missing",
         )
 
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Authorization header format. Expected 'Bearer <token>'",
-        )
-
-    token = authorization.removeprefix("Bearer ").strip()
+    token = str(credentials.credentials)
 
     try:
         user_id = decode_access_token(token)
@@ -39,9 +40,13 @@ async def get_current_user(authorization: str | None = Header(default=None), db:
 
     result = await db.execute(
         select(User)
-        .options(selectinload(User.profile), selectinload(User.group))
+        .options(
+            selectinload(User.profile),
+            selectinload(User.group),
+        )
         .where(User.id == user_id)
     )
+
     current_user = result.scalar_one_or_none()
 
     if not current_user or not current_user.is_active:

@@ -2,7 +2,7 @@ from datetime import date
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-from accounts.models import GenderEnum
+from app.accounts.models import GenderEnum
 from app.validators.accounts import validate_password_strength
 
 
