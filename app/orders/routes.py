@@ -9,11 +9,10 @@ from app.accounts.models import User
 from app.accounts.dependencies import get_current_user
 from app.orders.models import Order, OrderItem, OrderStatusEnum
 from app.orders.schemas import OrderResponseSchema
-from carts.models import CartItem
-from carts.services import get_cart_with_items
+from app.carts.models import CartItem
+from app.carts.services import get_cart_with_items
 from db.dependencies import get_db
-from movies.models import Movie
-from orders.services import get_order
+from app.orders.services import get_order
 
 router = APIRouter()
 
@@ -94,7 +93,7 @@ async def create_order(current_user: User = Depends(get_current_user), db: Async
 
 @router.get("/orders/{order_id}/", response_model=OrderResponseSchema)
 async def get_one_order(order_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    order = get_order(db=db, order_id=order_id, user_id=current_user.id)
+    order = await get_order(db=db, order_id=order_id, user_id=current_user.id)
     return order
 
 
@@ -111,7 +110,7 @@ async def cancel_order(order_id: int, current_user: User = Depends(get_current_u
     return order
 
 
-@router.post("/orders/{order_id}/pay/", response_model=OrderResponseSchema)
+@router.patch("/orders/{order_id}/pay/", response_model=OrderResponseSchema)
 async def pay_order(order_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     order = await get_order(db=db, order_id=order_id, user_id=current_user.id)
 

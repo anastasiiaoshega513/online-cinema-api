@@ -4,7 +4,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict
 
 from app.movies.schemas import MovieBaseSchema
-from orders.models import OrderStatusEnum
+from app.orders.models import OrderStatusEnum
 
 
 class OrderItemSchema(BaseModel):

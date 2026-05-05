@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.orders.schemas import OrderResponseSchema
-from orders.models import Order, OrderItem
+from app.orders.models import Order, OrderItem
 
 
 async def get_order(db: AsyncSession, order_id: int, user_id: int) -> OrderResponseSchema:

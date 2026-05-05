@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
@@ -16,7 +17,7 @@ class MovieBaseSchema(BaseModel):
     name: str
     year: int
     time: int
-    price: float
+    price: Decimal
 
 
 class MovieListItemSchema(MovieBaseSchema):
@@ -40,7 +41,7 @@ class MovieDetailSchema(MovieBaseSchema):
 
     id: int
     description: str
-    rating: float
+    rating: Decimal
     genres: List[GenreSchema]
 
 
@@ -49,7 +50,7 @@ class MovieCreateSchema(MovieBaseSchema):
 
     year: int
     description: str
-    rating: float
+    rating: Decimal
     genres: List[str]
 
 
@@ -59,7 +60,7 @@ class MovieUpdateSchema(BaseModel):
     id: int | None = None
     name: str | None = None
     time: int | None = None
-    price: float | None = None
+    price: Decimal | None = None
     year: int | None = None
     description: str | None = None
-    rating: float | None = None
+    rating: Decimal | None = None
