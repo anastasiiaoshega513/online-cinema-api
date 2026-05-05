@@ -1,6 +1,6 @@
 from typing import Literal
 
-from fastapi import APIRouter, Query, Depends, HTTPException
+from fastapi import APIRouter, Query, Depends, HTTPException, status
 from sqlalchemy import select, func, asc, desc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -69,7 +69,7 @@ async def get_movie_list(
     movies = result_movies.scalars().all()
 
     if not total_items or not movies:
-        raise HTTPException(status_code=404, detail="No movies found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No movies found.")
 
     movie_list = [MovieListItemSchema.model_validate(movie) for movie in movies]
 
@@ -105,7 +105,7 @@ async def create_movie(movie_data: MovieCreateSchema, db: AsyncSession = Depends
 
     if existing_movie:
         raise HTTPException(
-            status_code=409,
+            status_code=status.HTTP_409_CONFLICT,
             detail=(
                 f"A movie with the name '{movie_data.name}',"
                 f" year {movie_data.year}, time '{movie_data.time}' already exists."
@@ -130,7 +130,7 @@ async def create_movie(movie_data: MovieCreateSchema, db: AsyncSession = Depends
 
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=400, detail="Invalid input data.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid input data.")
 
 
 @router.patch("/movies/{movie_id}/", response_model=MovieDetailSchema)
@@ -154,7 +154,7 @@ async def update_movie(movie_id: int, movie_data: MovieUpdateSchema, db: AsyncSe
         return created_movie
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=400, detail="Invalid input data.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid input data.")
 
 
 @router.delete("/movies/{movie_id}/")
