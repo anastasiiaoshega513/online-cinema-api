@@ -1,8 +1,10 @@
+from decimal import Decimal
+
 from fastapi import status
 from sqlalchemy import select
 
 from app.accounts.models import User, ActivationToken
-
+from app.movies.models import Movie
 
 DEFAULT_PASSWORD = "Test321!"
 
@@ -115,3 +117,26 @@ async def get_auth_headers(
     return {
         "Authorization": f"Bearer {access_token}"
     }
+
+
+async def create_movie(
+    db_session,
+    name: str = "Test Movie",
+    year: int = 2024,
+    time: int = 120,
+    description: str = "Test movie description",
+    price: Decimal = Decimal("10.00"),
+):
+    movie = Movie(
+        name=name,
+        year=year,
+        time=time,
+        description=description,
+        price=price,
+    )
+
+    db_session.add(movie)
+    await db_session.commit()
+    await db_session.refresh(movie)
+
+    return movie
