@@ -262,3 +262,17 @@ Workflow file:
 ```text
 .github/workflows/ci.yml
 ```
+
+## Deployment
+
+The application is deployed on AWS EC2 and uses an Elastic IP address.
+
+Live API:
+
+```text
+http://18.193.158.51:8000
+```
+Swagger documentation:
+```text
+http://18.193.158.51:8000/docs
+```
