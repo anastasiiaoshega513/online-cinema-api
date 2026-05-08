@@ -12,9 +12,7 @@ from db.dependencies import get_db
 async def get_cart_with_items(db: AsyncSession, user_id: int) -> Cart | None:
     result = await db.execute(
         select(Cart)
-        .options(
-            selectinload(Cart.items).selectinload(CartItem.movie)
-        )
+        .options(selectinload(Cart.items).selectinload(CartItem.movie))
         .where(Cart.user_id == user_id)
         .execution_options(populate_existing=True)
     )
@@ -22,12 +20,12 @@ async def get_cart_with_items(db: AsyncSession, user_id: int) -> Cart | None:
     return result.scalar_one_or_none()
 
 
-async def get_or_create_cart(db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def get_or_create_cart(
+    db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)
+):
     result = await db.execute(
         select(Cart)
-        .options(
-            selectinload(Cart.items).selectinload(CartItem.movie)
-        )
+        .options(selectinload(Cart.items).selectinload(CartItem.movie))
         .where(Cart.user_id == current_user.id)
     )
 

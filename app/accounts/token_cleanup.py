@@ -12,15 +12,22 @@ from db.engine import AsyncSessionLocal
 async def cleanup_expired_tokens(db: AsyncSession) -> dict:
 
     await db.execute(
-        delete(ActivationToken).where(ActivationToken.expires_at < datetime.now(timezone.utc).replace(tzinfo=None))
+        delete(ActivationToken).where(
+            ActivationToken.expires_at < datetime.now(timezone.utc).replace(tzinfo=None)
+        )
     )
 
     await db.execute(
-        delete(PasswordResetToken).where(PasswordResetToken.expires_at < datetime.now(timezone.utc).replace(tzinfo=None))
+        delete(PasswordResetToken).where(
+            PasswordResetToken.expires_at
+            < datetime.now(timezone.utc).replace(tzinfo=None)
+        )
     )
 
     await db.execute(
-        delete(RefreshToken).where(RefreshToken.expires_at < datetime.now(timezone.utc).replace(tzinfo=None))
+        delete(RefreshToken).where(
+            RefreshToken.expires_at < datetime.now(timezone.utc).replace(tzinfo=None)
+        )
     )
 
     await db.commit()

@@ -1,7 +1,19 @@
 from enum import StrEnum, auto
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Enum, ForeignKey, Date, Text, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    DateTime,
+    func,
+    Enum,
+    ForeignKey,
+    Date,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Relationship, validates
 
 from db.engine import Base
@@ -82,10 +94,14 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    cart = Relationship("Cart", back_populates="user", cascade="all, delete-orphan", uselist=False)
+    cart = Relationship(
+        "Cart", back_populates="user", cascade="all, delete-orphan", uselist=False
+    )
 
     def __repr__(self):
-        return f"<UserModel(id={self.id}, email={self.email}, is_active={self.is_active})>"
+        return (
+            f"<UserModel(id={self.id}, email={self.email}, is_active={self.is_active})>"
+        )
 
     @property
     def password(self) -> None:

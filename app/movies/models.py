@@ -1,18 +1,33 @@
-from sqlalchemy import Column, Integer, String, Table, ForeignKey, UniqueConstraint, Text, Float, Numeric
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Table,
+    ForeignKey,
+    UniqueConstraint,
+    Text,
+    Float,
+    Numeric,
+)
 from sqlalchemy.orm import Relationship
 
 from db.engine import Base
-
 
 MoviesGenresModel = Table(
     "movies_genres",
     Base.metadata,
     Column(
         "movie_id",
-        ForeignKey("movies.id", ondelete="CASCADE"), primary_key=True, nullable=False),
+        ForeignKey("movies.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    ),
     Column(
         "genre_id",
-        ForeignKey("genres.id", ondelete="CASCADE"), primary_key=True, nullable=False),
+        ForeignKey("genres.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=False,
+    ),
 )
 
 

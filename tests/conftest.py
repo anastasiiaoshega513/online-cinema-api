@@ -13,7 +13,6 @@ from app.movies import models as movies_models
 from app.carts import models as carts_models
 from app.orders import models as orders_models
 
-
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
 

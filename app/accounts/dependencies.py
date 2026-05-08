@@ -9,7 +9,6 @@ from app.accounts.models import User
 from db.dependencies import get_db
 from app.security.tokens import decode_access_token
 
-
 bearer_scheme = HTTPBearer(auto_error=False)
 
 

@@ -10,11 +10,7 @@ class Cart(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
 
-    user = Relationship(
-        "User",
-        back_populates="cart",
-        uselist=False
-    )
+    user = Relationship("User", back_populates="cart", uselist=False)
     items = Relationship(
         "CartItem",
         back_populates="cart",
@@ -33,7 +29,9 @@ class CartItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     cart_id = Column(Integer, ForeignKey("carts.id"))
     movie_id = Column(Integer, ForeignKey("movies.id"))
-    added_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    added_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     cart = Relationship(
         "Cart",

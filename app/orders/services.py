@@ -7,12 +7,12 @@ from app.orders.schemas import OrderResponseSchema
 from app.orders.models import Order, OrderItem
 
 
-async def get_order(db: AsyncSession, order_id: int, user_id: int) -> OrderResponseSchema:
+async def get_order(
+    db: AsyncSession, order_id: int, user_id: int
+) -> OrderResponseSchema:
     stmt = (
         select(Order)
-        .options(
-            selectinload(Order.items).selectinload(OrderItem.movie)
-        )
+        .options(selectinload(Order.items).selectinload(OrderItem.movie))
         .where(Order.id == order_id, Order.user_id == user_id)
     )
 
@@ -20,6 +20,8 @@ async def get_order(db: AsyncSession, order_id: int, user_id: int) -> OrderRespo
     order = result.scalar_one_or_none()
 
     if not order:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No order found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No order found."
+        )
 
     return order

@@ -10,7 +10,9 @@ from app.movies.models import Movie
 router = APIRouter()
 
 
-@router.get("/cart/", response_model=CartResponseScheme, response_model_exclude_none=True)
+@router.get(
+    "/cart/", response_model=CartResponseScheme, response_model_exclude_none=True
+)
 async def get_cart(cart: Cart = Depends(get_or_create_cart)):
     if not cart.items:
         return {"detail": "There are no movies yet."}
@@ -19,11 +21,13 @@ async def get_cart(cart: Cart = Depends(get_or_create_cart)):
 
 
 @router.post("/cart/items/{movie_id}/", response_model=CartResponseScheme)
-async def add_to_cart(movie_id: int, cart: Cart = Depends(get_or_create_cart), db: AsyncSession = Depends(get_db)):
+async def add_to_cart(
+    movie_id: int,
+    cart: Cart = Depends(get_or_create_cart),
+    db: AsyncSession = Depends(get_db),
+):
 
-    movie = await db.scalar(
-        select(Movie).where(Movie.id == movie_id)
-    )
+    movie = await db.scalar(select(Movie).where(Movie.id == movie_id))
 
     if not movie:
         raise HTTPException(
@@ -40,7 +44,10 @@ async def add_to_cart(movie_id: int, cart: Cart = Depends(get_or_create_cart), d
     existing_item = stmt.scalar_one_or_none()
 
     if existing_item:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Movie is already in the cart.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Movie is already in the cart.",
+        )
 
     item = CartItem(movie_id=movie_id, cart_id=cart.id)
     db.add(item)
@@ -54,9 +61,21 @@ async def add_to_cart(movie_id: int, cart: Cart = Depends(get_or_create_cart), d
     }
 
 
-@router.delete("/cart/items/{movie_id}/", response_model=CartResponseScheme, response_model_exclude_none=True)
-async def remove_from_cart(movie_id: int, cart: Cart = Depends(get_or_create_cart), db: AsyncSession = Depends(get_db)):
-    stmt = await db.execute(select(CartItem).where(CartItem.movie_id == movie_id, CartItem.cart_id == cart.id))
+@router.delete(
+    "/cart/items/{movie_id}/",
+    response_model=CartResponseScheme,
+    response_model_exclude_none=True,
+)
+async def remove_from_cart(
+    movie_id: int,
+    cart: Cart = Depends(get_or_create_cart),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = await db.execute(
+        select(CartItem).where(
+            CartItem.movie_id == movie_id, CartItem.cart_id == cart.id
+        )
+    )
     movie_item = stmt.scalar_one_or_none()
 
     if not movie_item:
@@ -76,11 +95,13 @@ async def remove_from_cart(movie_id: int, cart: Cart = Depends(get_or_create_car
     }
 
 
-@router.delete("/cart/clear/", response_model=CartResponseScheme, response_model_exclude_none=True)
-async def clear_cart(cart: Cart = Depends(get_or_create_cart), db: AsyncSession = Depends(get_db)):
-    await db.execute(
-        delete(CartItem).where(CartItem.cart_id == cart.id)
-    )
+@router.delete(
+    "/cart/clear/", response_model=CartResponseScheme, response_model_exclude_none=True
+)
+async def clear_cart(
+    cart: Cart = Depends(get_or_create_cart), db: AsyncSession = Depends(get_db)
+):
+    await db.execute(delete(CartItem).where(CartItem.cart_id == cart.id))
     await db.commit()
 
     return {"detail": "Cart has been cleared successfully."}

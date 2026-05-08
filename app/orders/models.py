@@ -1,6 +1,15 @@
 from enum import StrEnum, auto
 
-from sqlalchemy import Column, Integer, ForeignKey, DateTime, func, Enum, Numeric, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    Integer,
+    ForeignKey,
+    DateTime,
+    func,
+    Enum,
+    Numeric,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Relationship
 
 from db.engine import Base
@@ -17,7 +26,9 @@ class Order(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     status = Column(
         Enum(OrderStatusEnum),
         default=OrderStatusEnum.PENDING,

@@ -4,7 +4,13 @@ from sqlalchemy import select
 
 from app.accounts.models import ActivationToken
 from app.accounts.models import User
-from helpers import register_user, activate_user, register_and_activate_user, login_user, DEFAULT_PASSWORD
+from helpers import (
+    register_user,
+    activate_user,
+    register_and_activate_user,
+    login_user,
+    DEFAULT_PASSWORD,
+)
 
 
 @pytest.mark.asyncio

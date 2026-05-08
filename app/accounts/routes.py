@@ -7,21 +7,50 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.accounts.dependencies import get_current_user
-from app.accounts.schemas import PasswordResetResponseSchema, ProfileResponseSchema, ProfileRequestSchema
-from app.accounts.models import ActivationToken, User, PasswordResetToken, RefreshToken, UserProfile
-from app.accounts.schemas import UserRegistrationResponseSchema, UserRegistrationRequestSchema, MessageResponseSchema, \
-    UserActivationRequestSchema, PasswordResetRequestSchema, PasswordResetCompleteRequestSchema, \
-    UserLoginResponseSchema, UserLoginRequestSchema, TokenRefreshResponseSchema, TokenRefreshRequestSchema
+from app.accounts.schemas import (
+    PasswordResetResponseSchema,
+    ProfileResponseSchema,
+    ProfileRequestSchema,
+)
+from app.accounts.models import (
+    ActivationToken,
+    User,
+    PasswordResetToken,
+    RefreshToken,
+    UserProfile,
+)
+from app.accounts.schemas import (
+    UserRegistrationResponseSchema,
+    UserRegistrationRequestSchema,
+    MessageResponseSchema,
+    UserActivationRequestSchema,
+    PasswordResetRequestSchema,
+    PasswordResetCompleteRequestSchema,
+    UserLoginResponseSchema,
+    UserLoginRequestSchema,
+    TokenRefreshResponseSchema,
+    TokenRefreshRequestSchema,
+)
 from app.accounts.services import get_user_by_email, create_user
 from db.dependencies import get_db
-from app.security.tokens import create_access_token, REFRESH_TOKEN_EXPIRE_DAYS, \
-    create_refresh_token, decode_refresh_token
+from app.security.tokens import (
+    create_access_token,
+    REFRESH_TOKEN_EXPIRE_DAYS,
+    create_refresh_token,
+    decode_refresh_token,
+)
 
 router = APIRouter()
 
 
-@router.post("/register/", response_model=UserRegistrationResponseSchema, status_code=status.HTTP_201_CREATED)
-async def register_user(user: UserRegistrationRequestSchema, db: AsyncSession = Depends(get_db)):
+@router.post(
+    "/register/",
+    response_model=UserRegistrationResponseSchema,
+    status_code=status.HTTP_201_CREATED,
+)
+async def register_user(
+    user: UserRegistrationRequestSchema, db: AsyncSession = Depends(get_db)
+):
     db_user = await get_user_by_email(db, str(user.email))
     if db_user:
         raise HTTPException(
@@ -64,7 +93,8 @@ async def activate(
     if (
         not activation_token
         or activation_token.token != user.token
-        or activation_token.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc)
+        or activation_token.expires_at.replace(tzinfo=timezone.utc)
+        < datetime.now(timezone.utc)
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -188,7 +218,8 @@ async def login(
         refresh_token_record = RefreshToken(
             user_id=db_user.id,
             token=user_refresh_token,
-            expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+            expires_at=datetime.now(timezone.utc)
+            + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
         )
         db.add(refresh_token_record)
         await db.commit()
@@ -249,7 +280,11 @@ async def refresh_token(
 
 
 @router.post("/profile/", response_model=ProfileResponseSchema)
-async def create_profile(profile: ProfileRequestSchema, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def create_profile(
+    profile: ProfileRequestSchema,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
 
     if current_user.profile is not None:
         raise HTTPException(

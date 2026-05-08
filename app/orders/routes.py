@@ -18,12 +18,12 @@ router = APIRouter()
 
 
 @router.get("/orders/", response_model=list[OrderResponseSchema])
-async def get_all_orders(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_all_orders(
+    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
     stmt = (
         select(Order)
-        .options(
-            selectinload(Order.items).selectinload(OrderItem.movie)
-        )
+        .options(selectinload(Order.items).selectinload(OrderItem.movie))
         .where(Order.user_id == current_user.id)
         .order_by(Order.created_at.desc())
     )
@@ -32,13 +32,17 @@ async def get_all_orders(current_user: User = Depends(get_current_user), db: Asy
     orders = result_orders.scalars().all()
 
     if not orders:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No orders found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No orders found."
+        )
 
     return orders
 
 
 @router.post("/orders/", response_model=OrderResponseSchema)
-async def create_order(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def create_order(
+    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
     cart = await get_cart_with_items(db=db, user_id=current_user.id)
 
     if cart is None or not cart.items:
@@ -72,17 +76,13 @@ async def create_order(current_user: User = Depends(get_current_user), db: Async
 
     order.total_amount = total_amount
 
-    await db.execute(
-        delete(CartItem).where(CartItem.cart_id == cart.id)
-    )
+    await db.execute(delete(CartItem).where(CartItem.cart_id == cart.id))
 
     await db.commit()
 
     result = await db.execute(
         select(Order)
-        .options(
-            selectinload(Order.items).selectinload(OrderItem.movie)
-        )
+        .options(selectinload(Order.items).selectinload(OrderItem.movie))
         .where(Order.id == order.id)
     )
 
@@ -92,17 +92,28 @@ async def create_order(current_user: User = Depends(get_current_user), db: Async
 
 
 @router.get("/orders/{order_id}/", response_model=OrderResponseSchema)
-async def get_one_order(order_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_one_order(
+    order_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     order = await get_order(db=db, order_id=order_id, user_id=current_user.id)
     return order
 
 
 @router.patch("/orders/{order_id}/cancel/", response_model=OrderResponseSchema)
-async def cancel_order(order_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def cancel_order(
+    order_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     order = await get_order(db=db, order_id=order_id, user_id=current_user.id)
 
     if not order.status == OrderStatusEnum.PENDING:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This order cannot be canceled.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This order cannot be canceled.",
+        )
 
     order.status = OrderStatusEnum.CANCELED
     await db.commit()
@@ -111,11 +122,17 @@ async def cancel_order(order_id: int, current_user: User = Depends(get_current_u
 
 
 @router.patch("/orders/{order_id}/pay/", response_model=OrderResponseSchema)
-async def pay_order(order_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def pay_order(
+    order_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     order = await get_order(db=db, order_id=order_id, user_id=current_user.id)
 
     if not order.status == OrderStatusEnum.PENDING:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This order cannot be paid.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="This order cannot be paid."
+        )
 
     order.status = OrderStatusEnum.PAID
     await db.commit()

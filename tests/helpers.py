@@ -30,9 +30,7 @@ async def get_activation_token(
     email: str,
 ) -> ActivationToken:
     result = await db_session.execute(
-        select(ActivationToken)
-        .join(ActivationToken.user)
-        .where(User.email == email)
+        select(ActivationToken).join(ActivationToken.user).where(User.email == email)
     )
 
     activation_token = result.scalar_one_or_none()
@@ -114,9 +112,7 @@ async def get_auth_headers(
     data = response.json()
     access_token = data["access_token"]
 
-    return {
-        "Authorization": f"Bearer {access_token}"
-    }
+    return {"Authorization": f"Bearer {access_token}"}
 
 
 async def create_movie(

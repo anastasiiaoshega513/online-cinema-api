@@ -6,10 +6,7 @@ from sqlalchemy.orm import selectinload
 from app.movies.models import Movie, Genre
 
 
-async def get_movie_or_404(
-    movie_id: int,
-    db: AsyncSession
-) -> Movie:
+async def get_movie_or_404(movie_id: int, db: AsyncSession) -> Movie:
     stmt = select(Movie).options(selectinload(Movie.genres)).where(Movie.id == movie_id)
 
     result = await db.execute(stmt)
