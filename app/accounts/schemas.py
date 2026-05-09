@@ -33,6 +33,7 @@ class UserRegistrationResponseSchema(UserBase):
 
     id: int
     is_active: bool
+    activation_token: str | None = None
 
 
 class PasswordResetRequestSchema(UserBase):

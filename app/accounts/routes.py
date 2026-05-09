@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
@@ -64,7 +64,12 @@ async def register_user(
         db.add(activation_token)
         await db.commit()
 
-        return new_user
+        return {
+            "id": new_user.id,
+            "email": new_user.email,
+            "is_active": new_user.is_active,
+            "activation_token": activation_token.token,
+        }
     except Exception:
         await db.rollback()
         raise HTTPException(
